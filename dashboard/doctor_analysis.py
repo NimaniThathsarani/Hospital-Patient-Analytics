@@ -30,10 +30,52 @@ def validate_doctor_data(data: pd.DataFrame) -> list[str]:
     Returns:
         Sorted list of missing column names.
     """
-    return sorted(REQUIRED_DOCTOR_COLUMNS.difference(data.columns))
+    return sorted(
+        REQUIRED_DOCTOR_COLUMNS.difference(data.columns)
+    )
 
 
-def create_doctor_summary(data: pd.DataFrame) -> pd.DataFrame:
+def get_primary_department(
+    department_values: pd.Series,
+) -> str:
+    """
+    Return the most frequently occurring department for a doctor.
+
+    The temporary cleaned dataset may assign one doctor to several
+    departments. Pasindu's processed dataset will later provide a
+    consistent doctor-to-department relationship.
+
+    Args:
+        department_values: Department values associated with a doctor.
+
+    Returns:
+        Most frequent department name.
+    """
+    valid_departments = (
+        department_values
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+
+    valid_departments = valid_departments[
+        valid_departments.ne("")
+    ]
+
+    if valid_departments.empty:
+        return "Unknown"
+
+    department_mode = valid_departments.mode()
+
+    if department_mode.empty:
+        return valid_departments.iloc[0]
+
+    return department_mode.iloc[0]
+
+
+def create_doctor_summary(
+    data: pd.DataFrame,
+) -> pd.DataFrame:
     """
     Create one performance-summary row for each doctor.
 
@@ -49,40 +91,74 @@ def create_doctor_summary(data: pd.DataFrame) -> pd.DataFrame:
     working_data = data.copy()
 
     working_data["is_30_day_readmission"] = (
-        working_data["readmitted"].astype(str).str.strip() == "<30"
+        working_data["readmitted"]
+        .astype(str)
+        .str.strip()
+        .eq("<30")
     )
 
     doctor_summary = (
         working_data.groupby(
-            ["doctor_id", "department"],
+            "doctor_id",
             as_index=False,
         )
         .agg(
-            unique_patients=("patient_nbr", "nunique"),
-            total_encounters=("encounter_id", "nunique"),
-            average_length_of_stay=("length_of_stay", "mean"),
-            readmission_rate=("is_30_day_readmission", "mean"),
-            average_satisfaction=("patient_satisfaction", "mean"),
+            department=(
+                "department",
+                get_primary_department,
+            ),
+            unique_patients=(
+                "patient_nbr",
+                "nunique",
+            ),
+            total_encounters=(
+                "encounter_id",
+                "nunique",
+            ),
+            average_length_of_stay=(
+                "length_of_stay",
+                "mean",
+            ),
+            readmission_rate=(
+                "is_30_day_readmission",
+                "mean",
+            ),
+            average_satisfaction=(
+                "patient_satisfaction",
+                "mean",
+            ),
         )
     )
 
     doctor_summary["readmission_rate"] *= 100
 
-    doctor_summary["average_length_of_stay"] = doctor_summary[
+    doctor_summary[
+        "average_length_of_stay"
+    ] = doctor_summary[
         "average_length_of_stay"
     ].round(2)
 
-    doctor_summary["readmission_rate"] = doctor_summary[
+    doctor_summary[
+        "readmission_rate"
+    ] = doctor_summary[
         "readmission_rate"
     ].round(2)
 
-    doctor_summary["average_satisfaction"] = doctor_summary[
+    doctor_summary[
+        "average_satisfaction"
+    ] = doctor_summary[
         "average_satisfaction"
     ].round(2)
 
     return doctor_summary.sort_values(
-        by=["unique_patients", "total_encounters"],
-        ascending=[False, False],
+        by=[
+            "unique_patients",
+            "total_encounters",
+        ],
+        ascending=[
+            False,
+            False,
+        ],
     ).reset_index(drop=True)
 
 
@@ -108,20 +184,26 @@ def create_single_doctor_metrics(
         return {}
 
     doctor_data["is_30_day_readmission"] = (
-        doctor_data["readmitted"].astype(str).str.strip() == "<30"
+        doctor_data["readmitted"]
+        .astype(str)
+        .str.strip()
+        .eq("<30")
     )
 
-    department = doctor_data["department"].mode()
+    average_length_of_stay = pd.to_numeric(
+        doctor_data["length_of_stay"],
+        errors="coerce",
+    ).mean()
 
-    average_length_of_stay = doctor_data["length_of_stay"].mean()
-    average_satisfaction = doctor_data["patient_satisfaction"].mean()
+    average_satisfaction = pd.to_numeric(
+        doctor_data["patient_satisfaction"],
+        errors="coerce",
+    ).mean()
 
     return {
         "doctor_id": str(doctor_id),
-        "department": (
-            department.iloc[0]
-            if not department.empty
-            else "Unknown"
+        "department": get_primary_department(
+            doctor_data["department"]
         ),
         "unique_patients": int(
             doctor_data["patient_nbr"].nunique()
@@ -130,19 +212,27 @@ def create_single_doctor_metrics(
             doctor_data["encounter_id"].nunique()
         ),
         "average_length_of_stay": (
-            round(float(average_length_of_stay), 2)
+            round(
+                float(average_length_of_stay),
+                2,
+            )
             if pd.notna(average_length_of_stay)
             else 0.0
         ),
         "readmission_rate": round(
             float(
-                doctor_data["is_30_day_readmission"].mean()
+                doctor_data[
+                    "is_30_day_readmission"
+                ].mean()
                 * 100
             ),
             2,
         ),
         "average_satisfaction": (
-            round(float(average_satisfaction), 2)
+            round(
+                float(average_satisfaction),
+                2,
+            )
             if pd.notna(average_satisfaction)
             else 0.0
         ),
@@ -153,7 +243,7 @@ def create_monthly_doctor_workload(
     data: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Create a monthly encounter count for one doctor's filtered records.
+    Create a monthly encounter count for one doctor.
 
     Args:
         data: Hospital records belonging to one doctor.
@@ -161,7 +251,10 @@ def create_monthly_doctor_workload(
     Returns:
         Monthly workload summary.
     """
-    if data.empty or "admission_date" not in data.columns:
+    if (
+        data.empty
+        or "admission_date" not in data.columns
+    ):
         return pd.DataFrame()
 
     workload_data = data.copy()
@@ -190,8 +283,14 @@ def create_monthly_doctor_workload(
             as_index=False,
         )
         .agg(
-            total_encounters=("encounter_id", "nunique"),
-            unique_patients=("patient_nbr", "nunique"),
+            total_encounters=(
+                "encounter_id",
+                "nunique",
+            ),
+            unique_patients=(
+                "patient_nbr",
+                "nunique",
+            ),
         )
         .sort_values("month")
     )
@@ -211,9 +310,12 @@ def create_top_diagnoses(
         limit: Maximum number of diagnoses to return.
 
     Returns:
-        Diagnosis frequency summary.
+        Diagnosis-frequency summary.
     """
-    if data.empty or "diag_1" not in data.columns:
+    if (
+        data.empty
+        or "diag_1" not in data.columns
+    ):
         return pd.DataFrame()
 
     diagnosis_data = (
@@ -231,17 +333,17 @@ def create_top_diagnoses(
     if diagnosis_data.empty:
         return pd.DataFrame()
 
-    top_diagnoses = (
+    return (
         diagnosis_data.value_counts()
         .head(limit)
         .rename_axis("diagnosis")
         .reset_index(name="encounter_count")
     )
 
-    return top_diagnoses
 
-
-def render_doctor_comparison(data: pd.DataFrame) -> None:
+def render_doctor_comparison(
+    data: pd.DataFrame,
+) -> None:
     """
     Render the interactive doctor-comparison section.
 
@@ -254,8 +356,9 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
 
     if missing_columns:
         st.error(
-            "Doctor comparison cannot be displayed because these "
-            f"columns are missing: {', '.join(missing_columns)}"
+            "Doctor comparison cannot be displayed because "
+            f"these columns are missing: "
+            f"{', '.join(missing_columns)}"
         )
         return
 
@@ -272,19 +375,55 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
         "30-day readmission rate, and patient satisfaction."
     )
 
-    maximum_doctors = min(20, len(doctor_summary))
-    minimum_doctors = 1 if maximum_doctors < 5 else 5
-    default_doctors = min(10, maximum_doctors)
+    available_doctors = sorted(
+        doctor_summary["doctor_id"]
+        .astype(str)
+        .unique()
+        .tolist()
+    )
+
+    selected_doctors = st.multiselect(
+        "Select doctors for direct comparison",
+        options=available_doctors,
+        help=(
+            "Select up to five doctors. Leave this empty to display "
+            "the highest-ranking doctors for the selected metric."
+        ),
+        key="direct_doctor_comparison",
+    )
+
+    if len(selected_doctors) > 5:
+        st.warning(
+            "Only the first five selected doctors will be compared."
+        )
+        selected_doctors = selected_doctors[:5]
+
+    maximum_doctors = min(
+        20,
+        len(doctor_summary),
+    )
+
+    minimum_doctors = (
+        1
+        if maximum_doctors < 5
+        else 5
+    )
+
+    default_doctors = min(
+        10,
+        maximum_doctors,
+    )
 
     control_column_1, control_column_2 = st.columns(2)
 
     with control_column_1:
         doctor_limit = st.slider(
-            "Number of doctors to display",
+            "Number of ranked doctors to display",
             min_value=minimum_doctors,
             max_value=maximum_doctors,
             value=default_doctors,
             step=1,
+            disabled=bool(selected_doctors),
             key="doctor_comparison_limit",
         )
 
@@ -304,21 +443,45 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
     metric_column_map = {
         "Unique Patients": "unique_patients",
         "Total Encounters": "total_encounters",
-        "Average Length of Stay": "average_length_of_stay",
-        "30-Day Readmission Rate": "readmission_rate",
-        "Average Satisfaction": "average_satisfaction",
+        "Average Length of Stay": (
+            "average_length_of_stay"
+        ),
+        "30-Day Readmission Rate": (
+            "readmission_rate"
+        ),
+        "Average Satisfaction": (
+            "average_satisfaction"
+        ),
     }
 
-    selected_column = metric_column_map[selected_metric]
+    selected_column = metric_column_map[
+        selected_metric
+    ]
 
-    chart_data = (
-        doctor_summary.sort_values(
-            by=selected_column,
-            ascending=False,
+    if selected_doctors:
+        chart_data = doctor_summary[
+            doctor_summary["doctor_id"]
+            .astype(str)
+            .isin(selected_doctors)
+        ].copy()
+
+        chart_title = (
+            f"Selected Doctors by {selected_metric}"
         )
-        .head(doctor_limit)
-        .copy()
-    )
+
+    else:
+        chart_data = (
+            doctor_summary.sort_values(
+                by=selected_column,
+                ascending=False,
+            )
+            .head(doctor_limit)
+            .copy()
+        )
+
+        chart_title = (
+            f"Top Doctors by {selected_metric}"
+        )
 
     comparison_chart = px.bar(
         chart_data,
@@ -326,7 +489,7 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
         y="doctor_id",
         orientation="h",
         color="department",
-        title=f"Top Doctors by {selected_metric}",
+        title=chart_title,
         labels={
             "doctor_id": "Doctor ID",
             selected_column: selected_metric,
@@ -351,7 +514,10 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
             "t": 60,
             "b": 20,
         },
-        height=max(450, doctor_limit * 32),
+        height=max(
+            450,
+            len(chart_data) * 40,
+        ),
         legend_title_text="Department",
     )
 
@@ -362,17 +528,35 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
 
     st.markdown("### Doctor Performance Summary")
 
-    display_summary = doctor_summary.rename(
+    display_summary = chart_data.rename(
         columns={
             "doctor_id": "Doctor ID",
             "department": "Department",
             "unique_patients": "Unique Patients",
             "total_encounters": "Total Encounters",
-            "average_length_of_stay": "Average Length of Stay",
-            "readmission_rate": "30-Day Readmission Rate (%)",
-            "average_satisfaction": "Average Satisfaction",
+            "average_length_of_stay": (
+                "Average Length of Stay"
+            ),
+            "readmission_rate": (
+                "30-Day Readmission Rate (%)"
+            ),
+            "average_satisfaction": (
+                "Average Satisfaction"
+            ),
         }
     )
+
+    display_summary = display_summary[
+        [
+            "Doctor ID",
+            "Department",
+            "Unique Patients",
+            "Total Encounters",
+            "Average Length of Stay",
+            "30-Day Readmission Rate (%)",
+            "Average Satisfaction",
+        ]
+    ]
 
     st.dataframe(
         display_summary,
@@ -380,8 +564,19 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
         hide_index=True,
     )
 
+    st.download_button(
+        label="Download Doctor Comparison CSV",
+        data=display_summary.to_csv(
+            index=False
+        ).encode("utf-8"),
+        file_name="doctor_performance_comparison.csv",
+        mime="text/csv",
+    )
 
-def render_doctor_details(data: pd.DataFrame) -> None:
+
+def render_doctor_details(
+    data: pd.DataFrame,
+) -> None:
     """
     Render a detailed drill-down view for one selected doctor.
 
@@ -394,8 +589,9 @@ def render_doctor_details(data: pd.DataFrame) -> None:
 
     if missing_columns:
         st.error(
-            "Doctor details cannot be displayed because these "
-            f"columns are missing: {', '.join(missing_columns)}"
+            "Doctor details cannot be displayed because "
+            f"these columns are missing: "
+            f"{', '.join(missing_columns)}"
         )
         return
 
@@ -457,7 +653,9 @@ def render_doctor_details(data: pd.DataFrame) -> None:
     with column_3:
         st.metric(
             "Average Length of Stay",
-            f"{metrics['average_length_of_stay']:.2f} days",
+            (
+                f"{metrics['average_length_of_stay']:.2f} days"
+            ),
         )
 
     with column_4:
@@ -469,14 +667,19 @@ def render_doctor_details(data: pd.DataFrame) -> None:
     with column_5:
         st.metric(
             "Average Satisfaction",
-            f"{metrics['average_satisfaction']:.2f} / 5",
+            (
+                f"{metrics['average_satisfaction']:.2f} / 5"
+            ),
         )
 
     doctor_data = data[
-        data["doctor_id"].astype(str) == selected_doctor
+        data["doctor_id"].astype(str)
+        == selected_doctor
     ].copy()
 
-    st.markdown("### Doctor Workload and Diagnosis Analysis")
+    st.markdown(
+        "### Doctor Workload and Diagnosis Analysis"
+    )
 
     chart_column_1, chart_column_2 = st.columns(2)
 
@@ -487,8 +690,8 @@ def render_doctor_details(data: pd.DataFrame) -> None:
     with chart_column_1:
         if monthly_workload.empty:
             st.info(
-                "Monthly workload cannot be displayed because valid "
-                "admission-date records are unavailable."
+                "Monthly workload cannot be displayed because "
+                "valid admission-date records are unavailable."
             )
         else:
             workload_chart = px.line(
@@ -499,7 +702,9 @@ def render_doctor_details(data: pd.DataFrame) -> None:
                 title="Monthly Encounter Workload",
                 labels={
                     "month": "Month",
-                    "total_encounters": "Total Encounters",
+                    "total_encounters": (
+                        "Total Encounters"
+                    ),
                 },
                 hover_data={
                     "unique_patients": True,
@@ -529,8 +734,8 @@ def render_doctor_details(data: pd.DataFrame) -> None:
     with chart_column_2:
         if top_diagnoses.empty:
             st.info(
-                "Diagnosis analysis cannot be displayed because valid "
-                "primary-diagnosis records are unavailable."
+                "Diagnosis analysis cannot be displayed because "
+                "valid primary-diagnosis records are unavailable."
             )
         else:
             diagnosis_chart = px.bar(
@@ -544,7 +749,9 @@ def render_doctor_details(data: pd.DataFrame) -> None:
                 title="Most Common Primary Diagnoses",
                 labels={
                     "diagnosis": "Primary Diagnosis",
-                    "encounter_count": "Encounter Count",
+                    "encounter_count": (
+                        "Encounter Count"
+                    ),
                 },
             )
 
@@ -586,8 +793,31 @@ def render_doctor_details(data: pd.DataFrame) -> None:
         )
         return
 
+    encounter_details = doctor_data[
+        display_columns
+    ].copy()
+
+    if "admission_date" in encounter_details.columns:
+        encounter_details[
+            "admission_date"
+        ] = pd.to_datetime(
+            encounter_details["admission_date"],
+            errors="coerce",
+        ).dt.strftime("%Y-%m-%d")
+
     st.dataframe(
-        doctor_data[display_columns],
+        encounter_details,
         use_container_width=True,
         hide_index=True,
+    )
+
+    st.download_button(
+        label="Download Doctor Encounter Details",
+        data=encounter_details.to_csv(
+            index=False
+        ).encode("utf-8"),
+        file_name=(
+            f"{selected_doctor}_encounter_details.csv"
+        ),
+        mime="text/csv",
     )
