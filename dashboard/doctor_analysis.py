@@ -149,6 +149,98 @@ def create_single_doctor_metrics(
     }
 
 
+def create_monthly_doctor_workload(
+    data: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Create a monthly encounter count for one doctor's filtered records.
+
+    Args:
+        data: Hospital records belonging to one doctor.
+
+    Returns:
+        Monthly workload summary.
+    """
+    if data.empty or "admission_date" not in data.columns:
+        return pd.DataFrame()
+
+    workload_data = data.copy()
+
+    workload_data["admission_date"] = pd.to_datetime(
+        workload_data["admission_date"],
+        errors="coerce",
+    )
+
+    workload_data = workload_data.dropna(
+        subset=["admission_date"]
+    )
+
+    if workload_data.empty:
+        return pd.DataFrame()
+
+    workload_data["month"] = (
+        workload_data["admission_date"]
+        .dt.to_period("M")
+        .dt.to_timestamp()
+    )
+
+    monthly_workload = (
+        workload_data.groupby(
+            "month",
+            as_index=False,
+        )
+        .agg(
+            total_encounters=("encounter_id", "nunique"),
+            unique_patients=("patient_nbr", "nunique"),
+        )
+        .sort_values("month")
+    )
+
+    return monthly_workload
+
+
+def create_top_diagnoses(
+    data: pd.DataFrame,
+    limit: int = 10,
+) -> pd.DataFrame:
+    """
+    Return the most frequent primary diagnoses for one doctor.
+
+    Args:
+        data: Hospital records belonging to one doctor.
+        limit: Maximum number of diagnoses to return.
+
+    Returns:
+        Diagnosis frequency summary.
+    """
+    if data.empty or "diag_1" not in data.columns:
+        return pd.DataFrame()
+
+    diagnosis_data = (
+        data["diag_1"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+
+    diagnosis_data = diagnosis_data[
+        diagnosis_data.ne("")
+        & diagnosis_data.str.lower().ne("nan")
+    ]
+
+    if diagnosis_data.empty:
+        return pd.DataFrame()
+
+    top_diagnoses = (
+        diagnosis_data.value_counts()
+        .head(limit)
+        .rename_axis("diagnosis")
+        .reset_index(name="encounter_count")
+    )
+
+    return top_diagnoses
+
+
 def render_doctor_comparison(data: pd.DataFrame) -> None:
     """
     Render the interactive doctor-comparison section.
@@ -383,6 +475,93 @@ def render_doctor_details(data: pd.DataFrame) -> None:
     doctor_data = data[
         data["doctor_id"].astype(str) == selected_doctor
     ].copy()
+
+    st.markdown("### Doctor Workload and Diagnosis Analysis")
+
+    chart_column_1, chart_column_2 = st.columns(2)
+
+    monthly_workload = create_monthly_doctor_workload(
+        doctor_data
+    )
+
+    with chart_column_1:
+        if monthly_workload.empty:
+            st.info(
+                "Monthly workload cannot be displayed because valid "
+                "admission-date records are unavailable."
+            )
+        else:
+            workload_chart = px.line(
+                monthly_workload,
+                x="month",
+                y="total_encounters",
+                markers=True,
+                title="Monthly Encounter Workload",
+                labels={
+                    "month": "Month",
+                    "total_encounters": "Total Encounters",
+                },
+                hover_data={
+                    "unique_patients": True,
+                },
+            )
+
+            workload_chart.update_layout(
+                margin={
+                    "l": 20,
+                    "r": 20,
+                    "t": 60,
+                    "b": 20,
+                },
+                height=420,
+            )
+
+            st.plotly_chart(
+                workload_chart,
+                use_container_width=True,
+            )
+
+    top_diagnoses = create_top_diagnoses(
+        doctor_data,
+        limit=10,
+    )
+
+    with chart_column_2:
+        if top_diagnoses.empty:
+            st.info(
+                "Diagnosis analysis cannot be displayed because valid "
+                "primary-diagnosis records are unavailable."
+            )
+        else:
+            diagnosis_chart = px.bar(
+                top_diagnoses.sort_values(
+                    "encounter_count",
+                    ascending=True,
+                ),
+                x="encounter_count",
+                y="diagnosis",
+                orientation="h",
+                title="Most Common Primary Diagnoses",
+                labels={
+                    "diagnosis": "Primary Diagnosis",
+                    "encounter_count": "Encounter Count",
+                },
+            )
+
+            diagnosis_chart.update_layout(
+                margin={
+                    "l": 20,
+                    "r": 20,
+                    "t": 60,
+                    "b": 20,
+                },
+                height=420,
+            )
+
+            st.plotly_chart(
+                diagnosis_chart,
+                use_container_width=True,
+            )
 
     display_columns = [
         column
