@@ -13,6 +13,7 @@ from doctor_analysis import (
     render_doctor_comparison,
     render_doctor_details,
 )
+from overview import render_executive_overview
 from styles import apply_dashboard_styles
 
 
@@ -29,10 +30,10 @@ CLEANED_DATA_PATH = (
 @st.cache_data
 def load_temporary_dashboard_data() -> pd.DataFrame:
     """
-    Load the cleaned hospital dataset temporarily for dashboard development.
+    Load the cleaned hospital dataset for dashboard development.
 
-    Pasindu's processed doctor-performance dataset and data loader will
-    replace this function during final integration.
+    Pasindu's processed doctor-performance dataset and data loader
+    will replace this function during final integration.
 
     Returns:
         Cleaned hospital data prepared for dashboard filtering.
@@ -291,9 +292,8 @@ if filtered_data.empty:
     st.stop()
 
 if selected_page == "Executive Overview":
-    st.info(
-        "The Executive Overview will be connected after Pasindu's "
-        "shared KPI module is merged."
+    render_executive_overview(
+        filtered_data
     )
 
 elif selected_page == "Doctor Comparison":
