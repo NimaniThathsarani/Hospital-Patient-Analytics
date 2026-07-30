@@ -77,7 +77,7 @@ def apply_dashboard_styles() -> str:
             color: #334e68 !important;
         }
 
-        /* Warning messages */
+        /* Alert messages */
         [data-testid="stAlert"][data-baseweb="notification"] {
             border-radius: 10px;
         }
@@ -113,6 +113,47 @@ def apply_dashboard_styles() -> str:
         ) {
             background-color: #fde2e2 !important;
             border: 1px solid #dc8d8d !important;
+        }
+
+        /* Download buttons */
+        [data-testid="stDownloadButton"] button {
+            background-color: #163a5c !important;
+            border: 1px solid #163a5c !important;
+            border-radius: 8px !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            padding: 0.55rem 1rem !important;
+            transition:
+                background-color 0.2s ease,
+                border-color 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        [data-testid="stDownloadButton"] button p,
+        [data-testid="stDownloadButton"] button span,
+        [data-testid="stDownloadButton"] button div {
+            color: #ffffff !important;
+        }
+
+        [data-testid="stDownloadButton"] button:hover {
+            background-color: #245d87 !important;
+            border-color: #245d87 !important;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+        }
+
+        [data-testid="stDownloadButton"] button:focus {
+            background-color: #163a5c !important;
+            border-color: #7fb3d5 !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 0.2rem rgba(127, 179, 213, 0.3);
+        }
+
+        [data-testid="stDownloadButton"] button:active {
+            background-color: #102d47 !important;
+            border-color: #102d47 !important;
+            color: #ffffff !important;
+            transform: translateY(0);
         }
 
         /* Custom cards */
