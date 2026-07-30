@@ -82,6 +82,55 @@ def create_doctor_summary(data: pd.DataFrame) -> pd.DataFrame:
     ).reset_index(drop=True)
 
 
+def create_single_doctor_metrics(
+    data: pd.DataFrame,
+    doctor_id: str,
+) -> dict[str, object]:
+    """
+    Calculate detailed KPIs for one selected doctor.
+
+    Args:
+        data: Filtered hospital dashboard dataset.
+        doctor_id: Doctor identifier selected by the user.
+
+    Returns:
+        Dictionary containing the selected doctor's KPIs.
+    """
+    doctor_data = data[data["doctor_id"] == doctor_id].copy()
+
+    if doctor_data.empty:
+        return {}
+
+    doctor_data["is_30_day_readmission"] = (
+        doctor_data["readmitted"].astype(str).str.strip() == "<30"
+    )
+
+    department = doctor_data["department"].mode()
+
+    return {
+        "doctor_id": doctor_id,
+        "department": (
+            department.iloc[0]
+            if not department.empty
+            else "Unknown"
+        ),
+        "unique_patients": doctor_data["patient_nbr"].nunique(),
+        "total_encounters": doctor_data["encounter_id"].nunique(),
+        "average_length_of_stay": round(
+            doctor_data["length_of_stay"].mean(),
+            2,
+        ),
+        "readmission_rate": round(
+            doctor_data["is_30_day_readmission"].mean() * 100,
+            2,
+        ),
+        "average_satisfaction": round(
+            doctor_data["patient_satisfaction"].mean(),
+            2,
+        ),
+    }
+
+
 def render_doctor_comparison(data: pd.DataFrame) -> None:
     """
     Render the doctor comparison section in Streamlit.
