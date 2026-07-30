@@ -33,11 +33,20 @@ Supports doctor-level comparisons using:
 
 Users can select up to five doctors for direct comparison or display the highest-ranking doctors for a selected KPI.
 
-The comparison result can be downloaded as a CSV file.
+The doctor comparison results can also be downloaded as a CSV file.
 
 ### Department Performance
 
-Displays department-level operational performance.
+Displays department-level operational performance, including:
+
+- Patients treated by department
+- Total encounters
+- Number of doctors
+- Average length of stay
+- 30-day readmission rate
+- Average patient satisfaction
+- Patients per doctor
+- Monthly department workload
 
 This page is implemented through the shared department-analysis module.
 
@@ -55,11 +64,11 @@ Provides drill-down analysis for one selected doctor:
 - Common primary diagnoses
 - Encounter-level records
 
-Doctor encounter details can be downloaded as a CSV file.
+Doctor encounter details can also be downloaded as a CSV file.
 
 ## Interactive Filters
 
-The sidebar contains:
+The dashboard sidebar contains:
 
 - Admission date range
 - Department
@@ -88,7 +97,7 @@ Average value of the `length_of_stay` field for the filtered records.
 Calculated as:
 
 ```text
-Encounters where readmitted is "<30"
+Number of encounters where readmitted is "<30"
 divided by
 Total filtered encounters
 multiplied by 100
@@ -96,7 +105,125 @@ multiplied by 100
 
 ### Average Satisfaction
 
-Average value of the patient-satisfaction field on a 1-to-5 scale.
+Average value of the `patient_satisfaction` field on a 1-to-5 scale.
+
+### Patients per Doctor
+
+Calculated as:
+
+```
+Unique patients treated by a department
+divided by
+Number of doctors in that department
+```
+
+## Folder Structure
+
+```
+Hospital-Patient-Analytics/
+│
+├── dashboard/
+│   ├── app.py
+│   ├── overview.py
+│   ├── doctor_analysis.py
+│   ├── department_analysis.py
+│   ├── data_loader.py
+│   ├── kpi_calculations.py
+│   ├── styles.py
+│   ├── README.md
+│   │
+│   └── screenshots/
+│       ├── dashboard_overview.png
+│       ├── doctor_comparison.png
+│       ├── department_performance.png
+│       └── doctor_details.png
+│
+├── scripts/
+│   └── prepare_doctor_dashboard_data.py
+│
+├── data/
+│   ├── raw/
+│   │   └── diabetic_data.csv
+│   │
+│   ├── cleaned/
+│   │   ├── cleaned_dataset.csv
+│   │   ├── daily_admissions.csv
+│   │   ├── encoded_dataset.csv
+│   │   ├── final_dataset.csv
+│   │   ├── monthly_admissions.csv
+│   │   └── weekly_admissions.csv
+│   │
+│   └── processed/
+│       └── doctor_performance_dataset.csv
+│
+├── models/
+│   └── admission_forecasting/
+│
+├── notebooks/
+├── outputs/
+├── requirements.txt
+├── data_dictionary.md
+├── Model_Evaluation_Report.md
+├── preprocessing_steps.md
+└── README.md
+```
+
+The repository already contains the data, models, notebooks, outputs, and project documentation areas shown above.
+
+## Main Dashboard Source Files
+
+`app.py`
+
+Main Streamlit application responsible for:
+
+- Page configuration
+- Navigation
+- Sidebar filters
+- Dataset selection
+- Connecting dashboard modules
+
+`overview.py`
+
+Contains:
+
+- Executive KPI calculations
+- Department overview charts
+- Monthly hospital workload analysis
+
+`doctor_analysis.py`
+
+Contains:
+
+- Doctor-level KPI calculations
+- Doctor ranking
+- Direct doctor comparison
+- Doctor details drill-down
+- Workload and diagnosis charts
+- CSV download functionality
+
+`department_analysis.py`
+
+Contains:
+
+- Department-level KPI calculations
+- Department comparison charts
+- Department workload analysis
+
+`data_loader.py`
+
+- Loads and validates the processed dashboard dataset.
+
+`kpi_calculations.py`
+
+- Contains reusable KPI calculation functions.
+
+`styles.py`
+
+- Contains shared CSS styling for the Streamlit dashboard.
+
+`prepare_doctor_dashboard_data.py`
+
+- Creates the dashboard-specific processed dataset from the cleaned hospital dataset.
 
 ## Data Source
 
@@ -114,7 +241,7 @@ data/cleaned/cleaned_dataset.csv
 
 The processed doctor-performance dataset is the preferred final dashboard source.
 
-## Run the Dashboard
+## Installation
 
 From the project root, install the required packages:
 
@@ -122,7 +249,9 @@ From the project root, install the required packages:
 python -m pip install streamlit pandas plotly
 ```
 
-Start the dashboard:
+## Run the Dashboard
+
+From the project root, run:
 
 ```python
 python -m streamlit run dashboard/app.py
@@ -134,25 +263,22 @@ The dashboard normally opens at:
 http://localhost:8501
 ```
 
-### Main Source Files
+## Dashboard Deliverables
 
-```
-dashboard/
-├── app.py
-├── overview.py
-├── doctor_analysis.py
-├── department_analysis.py
-├── data_loader.py
-├── kpi_calculations.py
-├── styles.py
-├── screenshots/
-└── README.md
-```
+The subgroup deliverables include:
+
+- Interactive Streamlit dashboard
+- Dashboard source code
+- Processed dashboard dataset
+- Dashboard screenshots
+- KPI documentation
+- Git commit history
+- Completed feature branch merged into main
 
 ## Data Limitations
 
-Some doctor, department, admission-date, location, and patient-satisfaction fields used in the project are synthetic fields created for analytical demonstration.
+Some fields used in this dashboard, including doctor, department, admission date, location, and patient satisfaction, were synthetically generated for project demonstration.
 
-Dashboard outputs should therefore be interpreted as project simulation results rather than real clinical performance assessments.
+The dashboard results should therefore be interpreted as simulated analytical outputs rather than real clinical performance assessments.
 
-Doctor performance should not be judged using a single KPI. Patient complexity, diagnosis severity, department workload, and other clinical factors should also be considered.
+Doctor performance should also be evaluated using multiple KPIs and relevant clinical context, not a single measure.
