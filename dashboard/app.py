@@ -39,16 +39,14 @@ def load_dashboard_data() -> tuple[pd.DataFrame, str]:
     """
     Load the best available dataset for the dashboard.
 
-    The processed doctor-performance dataset is preferred. During
-    development, the general cleaned dataset is used as a fallback.
+    The processed doctor-performance dataset is preferred.
+    The cleaned dataset is used as a temporary fallback.
 
     Returns:
-        Tuple containing:
-        - Loaded dashboard DataFrame
-        - Data-source description
+        Tuple containing the loaded DataFrame and data-source name.
 
     Raises:
-        FileNotFoundError: If neither expected dataset exists.
+        FileNotFoundError: If neither dataset exists.
     """
     if PROCESSED_DATA_PATH.exists():
         selected_path = PROCESSED_DATA_PATH
@@ -289,7 +287,7 @@ with st.sidebar:
     )
 
 try:
-    dashboard_data, data_source = load_dashboard_data()
+    dashboard_data, _ = load_dashboard_data()
 
 except FileNotFoundError as error:
     st.error(str(error))
@@ -298,19 +296,6 @@ except FileNotFoundError as error:
 filtered_data = apply_sidebar_filters(
     dashboard_data
 )
-
-if data_source == "processed":
-    st.success(
-        "Using the processed doctor-performance dataset."
-    )
-
-else:
-    st.warning(
-        "Development mode: the dashboard is temporarily using "
-        "data/cleaned/cleaned_dataset.csv. The processed "
-        "doctor-performance dataset will be selected automatically "
-        "when it becomes available."
-    )
 
 if filtered_data.empty:
     st.warning(
@@ -330,10 +315,7 @@ elif selected_page == "Doctor Comparison":
     )
 
 elif selected_page == "Department Performance":
-    st.info(
-        "The Department Performance page will be connected after "
-        "Pasindu's department analysis module is merged."
-    )
+    st.subheader("Department Performance")
 
 elif selected_page == "Doctor Details":
     render_doctor_details(
