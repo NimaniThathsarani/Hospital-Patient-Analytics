@@ -177,3 +177,108 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
         use_container_width=True,
         hide_index=True,
     )
+
+
+def render_doctor_details(data: pd.DataFrame) -> None:
+    """
+    Render a detailed drill-down view for one selected doctor.
+
+    Args:
+        data: Filtered hospital dashboard dataset.
+    """
+    st.subheader("Doctor Details")
+
+    missing_columns = validate_doctor_data(data)
+
+    if missing_columns:
+        st.error(
+            "Doctor details cannot be displayed because these columns "
+            f"are missing: {', '.join(missing_columns)}"
+        )
+        return
+
+    available_doctors = sorted(
+        data["doctor_id"].dropna().astype(str).unique().tolist()
+    )
+
+    if not available_doctors:
+        st.warning("No doctors are available for the selected filters.")
+        return
+
+    selected_doctor = st.selectbox(
+        "Select Doctor",
+        available_doctors,
+        key="doctor_details_selector",
+    )
+
+    metrics = create_single_doctor_metrics(
+        data,
+        selected_doctor,
+    )
+
+    if not metrics:
+        st.warning("No records were found for the selected doctor.")
+        return
+
+    st.caption(
+        f"Department: {metrics['department']}"
+    )
+
+    column_1, column_2, column_3, column_4, column_5 = st.columns(5)
+
+    with column_1:
+        st.metric(
+            "Unique Patients",
+            f"{metrics['unique_patients']:,}",
+        )
+
+    with column_2:
+        st.metric(
+            "Total Encounters",
+            f"{metrics['total_encounters']:,}",
+        )
+
+    with column_3:
+        st.metric(
+            "Average Length of Stay",
+            f"{metrics['average_length_of_stay']:.2f} days",
+        )
+
+    with column_4:
+        st.metric(
+            "30-Day Readmission Rate",
+            f"{metrics['readmission_rate']:.2f}%",
+        )
+
+    with column_5:
+        st.metric(
+            "Average Satisfaction",
+            f"{metrics['average_satisfaction']:.2f} / 5",
+        )
+
+    doctor_data = data[
+        data["doctor_id"].astype(str) == selected_doctor
+    ].copy()
+
+    display_columns = [
+        column
+        for column in [
+            "encounter_id",
+            "patient_nbr",
+            "department",
+            "admission_date",
+            "length_of_stay",
+            "readmitted",
+            "patient_satisfaction",
+            "diag_1",
+        ]
+        if column in doctor_data.columns
+    ]
+
+    st.markdown("### Encounter Details")
+
+    st.dataframe(
+        doctor_data[display_columns],
+        use_container_width=True,
+        hide_index=True,
+    )
