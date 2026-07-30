@@ -4,6 +4,7 @@ Main application for the Doctor Performance Dashboard.
 
 import streamlit as st
 
+from doctor_analysis import render_doctor_comparison
 from styles import apply_dashboard_styles
 
 
@@ -43,13 +44,23 @@ with st.sidebar:
         ],
     )
 
-st.info(f"Current page: {selected_page}")
+if selected_page == "Executive Overview":
+    st.info(
+        "Executive Overview will be connected after the shared KPI module is ready."
+    )
 
-st.markdown(
-    """
-    <div class="data-note">
-        Dashboard data and KPI calculations will be connected in the next steps.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+elif selected_page == "Doctor Comparison":
+    st.warning(
+        "Doctor comparison calculations are ready, but the page needs the "
+        "processed dashboard dataset and shared data loader before results "
+        "can be displayed."
+    )
+
+elif selected_page == "Department Performance":
+    st.info(
+        "Department Performance will be connected after the department "
+        "analysis module is completed."
+    )
+
+elif selected_page == "Doctor Details":
+    st.info("Doctor Details will be implemented in the next step.")
