@@ -4,7 +4,10 @@ Main application for the Doctor Performance Dashboard.
 
 import streamlit as st
 
-from doctor_analysis import render_doctor_comparison
+from doctor_analysis import (
+    render_doctor_comparison,
+    render_doctor_details,
+)
 from styles import apply_dashboard_styles
 
 
@@ -63,4 +66,7 @@ elif selected_page == "Department Performance":
     )
 
 elif selected_page == "Doctor Details":
-    st.info("Doctor Details will be implemented in the next step.")
+    st.warning(
+        "Doctor details functionality is ready, but it needs the processed "
+        "dashboard dataset before the drill-down page can be displayed."
+    )

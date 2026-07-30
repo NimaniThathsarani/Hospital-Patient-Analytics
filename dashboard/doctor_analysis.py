@@ -96,7 +96,9 @@ def create_single_doctor_metrics(
     Returns:
         Dictionary containing the selected doctor's KPIs.
     """
-    doctor_data = data[data["doctor_id"] == doctor_id].copy()
+    doctor_data = data[
+        data["doctor_id"].astype(str) == str(doctor_id)
+    ].copy()
 
     if doctor_data.empty:
         return {}
@@ -107,26 +109,38 @@ def create_single_doctor_metrics(
 
     department = doctor_data["department"].mode()
 
+    average_length_of_stay = doctor_data["length_of_stay"].mean()
+    average_satisfaction = doctor_data["patient_satisfaction"].mean()
+
     return {
-        "doctor_id": doctor_id,
+        "doctor_id": str(doctor_id),
         "department": (
             department.iloc[0]
             if not department.empty
             else "Unknown"
         ),
-        "unique_patients": doctor_data["patient_nbr"].nunique(),
-        "total_encounters": doctor_data["encounter_id"].nunique(),
-        "average_length_of_stay": round(
-            doctor_data["length_of_stay"].mean(),
-            2,
+        "unique_patients": int(
+            doctor_data["patient_nbr"].nunique()
+        ),
+        "total_encounters": int(
+            doctor_data["encounter_id"].nunique()
+        ),
+        "average_length_of_stay": (
+            round(float(average_length_of_stay), 2)
+            if pd.notna(average_length_of_stay)
+            else 0.0
         ),
         "readmission_rate": round(
-            doctor_data["is_30_day_readmission"].mean() * 100,
+            float(
+                doctor_data["is_30_day_readmission"].mean()
+                * 100
+            ),
             2,
         ),
-        "average_satisfaction": round(
-            doctor_data["patient_satisfaction"].mean(),
-            2,
+        "average_satisfaction": (
+            round(float(average_satisfaction), 2)
+            if pd.notna(average_satisfaction)
+            else 0.0
         ),
     }
 
@@ -152,7 +166,9 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
     doctor_summary = create_doctor_summary(data)
 
     if doctor_summary.empty:
-        st.warning("No doctor records are available for the selected filters.")
+        st.warning(
+            "No doctor records are available for the selected filters."
+        )
         return
 
     st.caption(
@@ -198,11 +214,17 @@ def render_doctor_details(data: pd.DataFrame) -> None:
         return
 
     available_doctors = sorted(
-        data["doctor_id"].dropna().astype(str).unique().tolist()
+        data["doctor_id"]
+        .dropna()
+        .astype(str)
+        .unique()
+        .tolist()
     )
 
     if not available_doctors:
-        st.warning("No doctors are available for the selected filters.")
+        st.warning(
+            "No doctors are available for the selected filters."
+        )
         return
 
     selected_doctor = st.selectbox(
@@ -217,14 +239,22 @@ def render_doctor_details(data: pd.DataFrame) -> None:
     )
 
     if not metrics:
-        st.warning("No records were found for the selected doctor.")
+        st.warning(
+            "No records were found for the selected doctor."
+        )
         return
 
     st.caption(
         f"Department: {metrics['department']}"
     )
 
-    column_1, column_2, column_3, column_4, column_5 = st.columns(5)
+    (
+        column_1,
+        column_2,
+        column_3,
+        column_4,
+        column_5,
+    ) = st.columns(5)
 
     with column_1:
         st.metric(
@@ -276,6 +306,12 @@ def render_doctor_details(data: pd.DataFrame) -> None:
     ]
 
     st.markdown("### Encounter Details")
+
+    if not display_columns:
+        st.warning(
+            "No encounter-detail columns are available."
+        )
+        return
 
     st.dataframe(
         doctor_data[display_columns],
