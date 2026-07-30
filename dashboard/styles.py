@@ -8,24 +8,23 @@ def apply_dashboard_styles() -> str:
     Return custom CSS used across the Streamlit dashboard.
 
     Returns:
-        str: CSS styling for the dashboard.
+        CSS styling for the complete dashboard.
     """
     return """
     <style>
+        /* Main application */
         .stApp {
             background-color: #f4f7fb;
+            color: #16324f;
         }
 
         .main .block-container {
-            max-width: 1400px;
+            max-width: 1500px;
             padding-top: 1.5rem;
             padding-bottom: 2rem;
         }
 
-        h1, h2, h3 {
-            color: #16324f;
-        }
-
+        /* Dashboard heading */
         .dashboard-title {
             font-size: 2.2rem;
             font-weight: 700;
@@ -39,6 +38,84 @@ def apply_dashboard_styles() -> str:
             margin-bottom: 1.5rem;
         }
 
+        /* Main content headings */
+        [data-testid="stMain"] h1,
+        [data-testid="stMain"] h2,
+        [data-testid="stMain"] h3,
+        [data-testid="stMain"] h4 {
+            color: #16324f !important;
+        }
+
+        /* Main widget labels */
+        [data-testid="stMain"] [data-testid="stWidgetLabel"] p {
+            color: #334e68 !important;
+            font-weight: 600;
+        }
+
+        /* Metric cards */
+        [data-testid="stMetric"] {
+            background-color: #ffffff;
+            border: 1px solid #dce5ee;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(22, 50, 79, 0.06);
+            min-height: 118px;
+        }
+
+        [data-testid="stMetricLabel"] p {
+            color: #667788 !important;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        [data-testid="stMetricValue"] {
+            color: #16324f !important;
+            font-weight: 700;
+        }
+
+        [data-testid="stMetricDelta"] {
+            color: #334e68 !important;
+        }
+
+        /* Warning messages */
+        [data-testid="stAlert"][data-baseweb="notification"] {
+            border-radius: 10px;
+        }
+
+        [data-testid="stAlert"] p {
+            color: #2c3e50 !important;
+            font-weight: 500;
+        }
+
+        div[data-testid="stAlert"]:has(
+            [data-testid="stAlertContentWarning"]
+        ) {
+            background-color: #fff4cc !important;
+            border: 1px solid #e7c55a !important;
+        }
+
+        div[data-testid="stAlert"]:has(
+            [data-testid="stAlertContentInfo"]
+        ) {
+            background-color: #dceeff !important;
+            border: 1px solid #8fc0ea !important;
+        }
+
+        div[data-testid="stAlert"]:has(
+            [data-testid="stAlertContentSuccess"]
+        ) {
+            background-color: #dcf5e7 !important;
+            border: 1px solid #80c99f !important;
+        }
+
+        div[data-testid="stAlert"]:has(
+            [data-testid="stAlertContentError"]
+        ) {
+            background-color: #fde2e2 !important;
+            border: 1px solid #dc8d8d !important;
+        }
+
+        /* Custom cards */
         .kpi-card {
             background: #ffffff;
             border: 1px solid #dce5ee;
@@ -70,11 +147,17 @@ def apply_dashboard_styles() -> str:
             margin-bottom: 18px;
         }
 
+        /* Sidebar */
         [data-testid="stSidebar"] {
-            background-color: #16324f;
+            background-color: #163a5c;
         }
 
-        [data-testid="stSidebar"] * {
+        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3,
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] span {
             color: #ffffff;
         }
 
@@ -82,18 +165,50 @@ def apply_dashboard_styles() -> str:
             font-weight: 600;
         }
 
+        /* Select and multiselect widgets */
+        [data-baseweb="select"] > div {
+            background-color: #111827;
+            border-color: #334155;
+            color: #ffffff;
+        }
+
+        [data-baseweb="popover"] {
+            color: #ffffff;
+        }
+
+        [data-baseweb="popover"] ul {
+            background-color: #10141c;
+        }
+
+        [data-baseweb="popover"] li {
+            color: #ffffff;
+        }
+
+        /* Data tables */
         [data-testid="stDataFrame"] {
             border: 1px solid #dce5ee;
             border-radius: 10px;
+            overflow: hidden;
         }
 
+        /* Custom data note */
         .data-note {
-            background-color: #fff8e7;
+            background-color: #fff4cc;
+            border: 1px solid #e7c55a;
             border-left: 4px solid #d6a84b;
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 12px 14px;
             color: #5d4a1f;
             margin: 12px 0;
+        }
+
+        /* Captions */
+        [data-testid="stCaptionContainer"] {
+            color: #60758a !important;
+        }
+
+        hr {
+            border-color: #d6e0e9;
         }
     </style>
     """
