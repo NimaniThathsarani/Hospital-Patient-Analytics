@@ -19,6 +19,13 @@ from styles import apply_dashboard_styles
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
+PROCESSED_DATA_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "doctor_performance_dataset.csv"
+)
+
 CLEANED_DATA_PATH = (
     PROJECT_ROOT
     / "data"
@@ -28,27 +35,38 @@ CLEANED_DATA_PATH = (
 
 
 @st.cache_data
-def load_temporary_dashboard_data() -> pd.DataFrame:
+def load_dashboard_data() -> tuple[pd.DataFrame, str]:
     """
-    Load the cleaned hospital dataset for dashboard development.
+    Load the best available dataset for the dashboard.
 
-    Pasindu's processed doctor-performance dataset and data loader
-    will replace this function during final integration.
+    The processed doctor-performance dataset is preferred. During
+    development, the general cleaned dataset is used as a fallback.
 
     Returns:
-        Cleaned hospital data prepared for dashboard filtering.
+        Tuple containing:
+        - Loaded dashboard DataFrame
+        - Data-source description
 
     Raises:
-        FileNotFoundError: If cleaned_dataset.csv does not exist.
+        FileNotFoundError: If neither expected dataset exists.
     """
-    if not CLEANED_DATA_PATH.exists():
+    if PROCESSED_DATA_PATH.exists():
+        selected_path = PROCESSED_DATA_PATH
+        data_source = "processed"
+
+    elif CLEANED_DATA_PATH.exists():
+        selected_path = CLEANED_DATA_PATH
+        data_source = "cleaned_fallback"
+
+    else:
         raise FileNotFoundError(
-            "The cleaned dataset was not found at: "
-            f"{CLEANED_DATA_PATH}"
+            "No dashboard dataset was found. Expected either:\n"
+            f"- {PROCESSED_DATA_PATH}\n"
+            f"- {CLEANED_DATA_PATH}"
         )
 
     data = pd.read_csv(
-        CLEANED_DATA_PATH,
+        selected_path,
         low_memory=False,
     )
 
@@ -68,7 +86,7 @@ def load_temporary_dashboard_data() -> pd.DataFrame:
                 errors="coerce",
             )
 
-    return data
+    return data, data_source
 
 
 def apply_sidebar_filters(
@@ -78,10 +96,10 @@ def apply_sidebar_filters(
     Display dashboard filters and return the filtered dataset.
 
     Args:
-        data: Complete temporary dashboard dataset.
+        data: Complete dashboard dataset.
 
     Returns:
-        Filtered dashboard dataset.
+        Dataset after applying sidebar filters.
     """
     filtered_data = data.copy()
 
@@ -111,13 +129,16 @@ def apply_sidebar_filters(
             max_value=maximum_date,
         )
 
-        if len(selected_dates) == 2:
+        if (
+            isinstance(selected_dates, (tuple, list))
+            and len(selected_dates) == 2
+        ):
             start_date, end_date = selected_dates
 
             filtered_data = filtered_data[
-                filtered_data[
-                    "admission_date"
-                ].dt.date.between(
+                filtered_data["admission_date"]
+                .dt.date
+                .between(
                     start_date,
                     end_date,
                 )
@@ -268,7 +289,7 @@ with st.sidebar:
     )
 
 try:
-    dashboard_data = load_temporary_dashboard_data()
+    dashboard_data, data_source = load_dashboard_data()
 
 except FileNotFoundError as error:
     st.error(str(error))
@@ -278,11 +299,18 @@ filtered_data = apply_sidebar_filters(
     dashboard_data
 )
 
-st.warning(
-    "Development mode: this dashboard is temporarily using "
-    "data/cleaned/cleaned_dataset.csv. Pasindu's processed "
-    "doctor-performance dataset will replace it during integration."
-)
+if data_source == "processed":
+    st.success(
+        "Using the processed doctor-performance dataset."
+    )
+
+else:
+    st.warning(
+        "Development mode: the dashboard is temporarily using "
+        "data/cleaned/cleaned_dataset.csv. The processed "
+        "doctor-performance dataset will be selected automatically "
+        "when it becomes available."
+    )
 
 if filtered_data.empty:
     st.warning(
