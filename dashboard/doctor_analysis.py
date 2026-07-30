@@ -5,6 +5,7 @@ Doctor-level analysis components for the Doctor Performance Dashboard.
 from __future__ import annotations
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 
@@ -21,13 +22,13 @@ REQUIRED_DOCTOR_COLUMNS = {
 
 def validate_doctor_data(data: pd.DataFrame) -> list[str]:
     """
-    Return a list of required doctor-analysis columns missing from the dataset.
+    Return the required doctor-analysis columns missing from the dataset.
 
     Args:
         data: Filtered hospital dashboard dataset.
 
     Returns:
-        A sorted list of missing column names.
+        Sorted list of missing column names.
     """
     return sorted(REQUIRED_DOCTOR_COLUMNS.difference(data.columns))
 
@@ -52,7 +53,10 @@ def create_doctor_summary(data: pd.DataFrame) -> pd.DataFrame:
     )
 
     doctor_summary = (
-        working_data.groupby(["doctor_id", "department"], as_index=False)
+        working_data.groupby(
+            ["doctor_id", "department"],
+            as_index=False,
+        )
         .agg(
             unique_patients=("patient_nbr", "nunique"),
             total_encounters=("encounter_id", "nunique"),
@@ -147,7 +151,7 @@ def create_single_doctor_metrics(
 
 def render_doctor_comparison(data: pd.DataFrame) -> None:
     """
-    Render the doctor comparison section in Streamlit.
+    Render the interactive doctor-comparison section.
 
     Args:
         data: Filtered hospital dashboard dataset.
@@ -158,8 +162,8 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
 
     if missing_columns:
         st.error(
-            "Doctor comparison cannot be displayed because these columns "
-            f"are missing: {', '.join(missing_columns)}"
+            "Doctor comparison cannot be displayed because these "
+            f"columns are missing: {', '.join(missing_columns)}"
         )
         return
 
@@ -175,6 +179,96 @@ def render_doctor_comparison(data: pd.DataFrame) -> None:
         "Compare doctors using patient volume, length of stay, "
         "30-day readmission rate, and patient satisfaction."
     )
+
+    maximum_doctors = min(20, len(doctor_summary))
+    minimum_doctors = 1 if maximum_doctors < 5 else 5
+    default_doctors = min(10, maximum_doctors)
+
+    control_column_1, control_column_2 = st.columns(2)
+
+    with control_column_1:
+        doctor_limit = st.slider(
+            "Number of doctors to display",
+            min_value=minimum_doctors,
+            max_value=maximum_doctors,
+            value=default_doctors,
+            step=1,
+            key="doctor_comparison_limit",
+        )
+
+    with control_column_2:
+        selected_metric = st.selectbox(
+            "Select comparison metric",
+            [
+                "Unique Patients",
+                "Total Encounters",
+                "Average Length of Stay",
+                "30-Day Readmission Rate",
+                "Average Satisfaction",
+            ],
+            key="doctor_comparison_metric",
+        )
+
+    metric_column_map = {
+        "Unique Patients": "unique_patients",
+        "Total Encounters": "total_encounters",
+        "Average Length of Stay": "average_length_of_stay",
+        "30-Day Readmission Rate": "readmission_rate",
+        "Average Satisfaction": "average_satisfaction",
+    }
+
+    selected_column = metric_column_map[selected_metric]
+
+    chart_data = (
+        doctor_summary.sort_values(
+            by=selected_column,
+            ascending=False,
+        )
+        .head(doctor_limit)
+        .copy()
+    )
+
+    comparison_chart = px.bar(
+        chart_data,
+        x=selected_column,
+        y="doctor_id",
+        orientation="h",
+        color="department",
+        title=f"Top Doctors by {selected_metric}",
+        labels={
+            "doctor_id": "Doctor ID",
+            selected_column: selected_metric,
+            "department": "Department",
+        },
+        hover_data={
+            "unique_patients": True,
+            "total_encounters": True,
+            "average_length_of_stay": ":.2f",
+            "readmission_rate": ":.2f",
+            "average_satisfaction": ":.2f",
+        },
+    )
+
+    comparison_chart.update_layout(
+        yaxis={
+            "categoryorder": "total ascending",
+        },
+        margin={
+            "l": 20,
+            "r": 20,
+            "t": 60,
+            "b": 20,
+        },
+        height=max(450, doctor_limit * 32),
+        legend_title_text="Department",
+    )
+
+    st.plotly_chart(
+        comparison_chart,
+        use_container_width=True,
+    )
+
+    st.markdown("### Doctor Performance Summary")
 
     display_summary = doctor_summary.rename(
         columns={
@@ -208,8 +302,8 @@ def render_doctor_details(data: pd.DataFrame) -> None:
 
     if missing_columns:
         st.error(
-            "Doctor details cannot be displayed because these columns "
-            f"are missing: {', '.join(missing_columns)}"
+            "Doctor details cannot be displayed because these "
+            f"columns are missing: {', '.join(missing_columns)}"
         )
         return
 
