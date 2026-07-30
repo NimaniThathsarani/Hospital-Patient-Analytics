@@ -93,3 +93,66 @@ divided by
 Total filtered encounters
 multiplied by 100
 ```
+
+### Average Satisfaction
+
+Average value of the patient-satisfaction field on a 1-to-5 scale.
+
+## Data Source
+
+The application first checks for:
+
+```
+data/processed/doctor_performance_dataset.csv
+```
+
+If that file is unavailable during development, it uses:
+
+```
+data/cleaned/cleaned_dataset.csv
+```
+
+The processed doctor-performance dataset is the preferred final dashboard source.
+
+## Run the Dashboard
+
+From the project root, install the required packages:
+
+```python
+python -m pip install streamlit pandas plotly
+```
+
+Start the dashboard:
+
+```python
+python -m streamlit run dashboard/app.py
+```
+
+The dashboard normally opens at:
+
+```
+http://localhost:8501
+```
+
+### Main Source Files
+
+```
+dashboard/
+├── app.py
+├── overview.py
+├── doctor_analysis.py
+├── department_analysis.py
+├── data_loader.py
+├── kpi_calculations.py
+├── styles.py
+├── screenshots/
+└── README.md
+```
+
+## Data Limitations
+
+Some doctor, department, admission-date, location, and patient-satisfaction fields used in the project are synthetic fields created for analytical demonstration.
+
+Dashboard outputs should therefore be interpreted as project simulation results rather than real clinical performance assessments.
+
+Doctor performance should not be judged using a single KPI. Patient complexity, diagnosis severity, department workload, and other clinical factors should also be considered.
