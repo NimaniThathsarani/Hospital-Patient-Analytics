@@ -107,7 +107,7 @@ def _render_department_bar_chart(
         margin={"l": 20, "r": 20, "t": 60, "b": 20},
     )
 
-    st.plotly_chart(chart, use_container_width=True)
+    st.plotly_chart(chart, width='stretch')
 
 
 def render_department_performance(data: pd.DataFrame) -> None:
@@ -213,7 +213,7 @@ def render_department_performance(data: pd.DataFrame) -> None:
 
     st.dataframe(
         display_summary,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
     )
 
@@ -280,4 +280,4 @@ def render_department_performance(data: pd.DataFrame) -> None:
         margin={"l": 20, "r": 20, "t": 60, "b": 20},
     )
 
-    st.plotly_chart(trend_chart, use_container_width=True)
+    st.plotly_chart(trend_chart, width='stretch')
