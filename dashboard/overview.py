@@ -330,7 +330,7 @@ def render_executive_overview(
 
             st.plotly_chart(
                 encounter_chart,
-                use_container_width=True,
+                width='stretch',
             )
 
         with chart_column_2:
@@ -359,7 +359,7 @@ def render_executive_overview(
 
             st.plotly_chart(
                 readmission_chart,
-                use_container_width=True,
+                width='stretch',
             )
 
         display_summary = department_summary.rename(
@@ -382,7 +382,7 @@ def render_executive_overview(
 
         st.dataframe(
             display_summary,
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
         )
 
@@ -425,5 +425,5 @@ def render_executive_overview(
 
         st.plotly_chart(
             workload_chart,
-            use_container_width=True,
+            width='stretch',
         )

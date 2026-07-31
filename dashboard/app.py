@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from department_analysis import render_department_performance
 from doctor_analysis import (
     render_doctor_comparison,
     render_doctor_details,
@@ -315,7 +316,9 @@ elif selected_page == "Doctor Comparison":
     )
 
 elif selected_page == "Department Performance":
-    st.subheader("Department Performance")
+    render_department_performance(
+        filtered_data
+    )
 
 elif selected_page == "Doctor Details":
     render_doctor_details(

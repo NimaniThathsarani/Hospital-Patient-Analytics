@@ -580,7 +580,7 @@ def render_doctor_comparison(
 
     st.plotly_chart(
         comparison_chart,
-        use_container_width=True,
+        width='stretch',
     )
 
     st.markdown("### Doctor Performance Summary")
@@ -591,7 +591,7 @@ def render_doctor_comparison(
 
     st.dataframe(
         display_summary,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
     )
 
@@ -755,7 +755,7 @@ def render_doctor_details(
 
             st.plotly_chart(
                 workload_chart,
-                use_container_width=True,
+                width='stretch',
             )
 
     top_diagnoses = create_top_diagnoses(
@@ -799,7 +799,7 @@ def render_doctor_details(
 
             st.plotly_chart(
                 diagnosis_chart,
-                use_container_width=True,
+                width='stretch',
             )
 
     display_columns = [
@@ -854,7 +854,7 @@ def render_doctor_details(
 
     st.dataframe(
         encounter_details,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
     )
 
