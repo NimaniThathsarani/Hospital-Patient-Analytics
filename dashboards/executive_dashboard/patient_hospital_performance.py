@@ -1,13 +1,5 @@
 """
 Patient & Hospital Performance dashboard for the Executive KPI Dashboard.
-
-Covers:
-    - Total Patients, Readmission Rate, ALOS, Bed Occupancy Rate, Patient Satisfaction
-    - Admission Forecasts (historical monthly trend + ARIMA & Prophet forecast overlay)
-    - Readmission Rate Trend Over Time
-    - High-Risk Patients table with download
-    - Patient demographic breakdowns (age group, gender)
-    - ALOS by Department
 """
 
 from __future__ import annotations
@@ -35,9 +27,8 @@ from kpi_calculations import (
     _safe_round,
 )
 
-# ---------------------------------------------------------------------------
 # Paths to pre-trained forecast files
-# ---------------------------------------------------------------------------
+
 _DASHBOARD_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _DASHBOARD_DIR.parent.parent
 _FORECAST_DIR = _PROJECT_ROOT / "models" / "admission_forecasting"
@@ -47,9 +38,7 @@ _PROPHET_DAILY_PATH = _FORECAST_DIR / "prophet_forecast_daily_future.csv"
 _MODEL_COMPARISON_PATH = _FORECAST_DIR / "model_comparison.csv"
 
 
-# ---------------------------------------------------------------------------
 # KPI Computation
-# ---------------------------------------------------------------------------
 
 def compute_kpis(data: pd.DataFrame) -> dict:
     """Compute top-level KPIs for the Patient & Hospital Performance dashboard."""
@@ -93,10 +82,7 @@ def compute_kpis(data: pd.DataFrame) -> dict:
         "avg_satisfaction": avg_satisfaction,
     }
 
-
-# ---------------------------------------------------------------------------
 # KPI Card HTML helper
-# ---------------------------------------------------------------------------
 
 def _kpi_card(title: str, value: str | int | float, icon: str, color: str,
               subtitle: str = "") -> str:
@@ -115,10 +101,7 @@ def _kpi_card(title: str, value: str | int | float, icon: str, color: str,
     </div>
     """
 
-
-# ---------------------------------------------------------------------------
 # Chart Builders
-# ---------------------------------------------------------------------------
 
 def _load_historical_monthly() -> pd.DataFrame | None:
     """Load the pre-aggregated monthly admissions CSV."""
@@ -478,10 +461,7 @@ def _load_model_comparison() -> pd.DataFrame | None:
     df = pd.read_csv(_MODEL_COMPARISON_PATH)
     return df
 
-
-# ---------------------------------------------------------------------------
 # Main Dashboard Rendering
-# ---------------------------------------------------------------------------
 
 def render_patient_hospital_performance(data: pd.DataFrame) -> None:
     """
@@ -514,9 +494,9 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
         st.warning("Unable to compute KPIs for the selected data.")
         return
 
-    # -----------------------------------------------------------------------
+    
     # Section 1 — KPI Cards (2 rows × 4 columns)
-    # -----------------------------------------------------------------------
+  
     st.markdown("#### 📊 Key Performance Indicators")
     r1c1, r1c2, r1c3, r1c4 = st.columns(4)
     with r1c1:
@@ -573,9 +553,9 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # -----------------------------------------------------------------------
+    
     # Section 2 — Admission Forecast + Bed Occupancy Gauge
-    # -----------------------------------------------------------------------
+    
     st.markdown("#### 📈 Admission Trends & Forecast")
     chart_col, gauge_col = st.columns([3, 2])
     with chart_col:
@@ -604,9 +584,9 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
         if fig_readm_trend:
             st.plotly_chart(fig_readm_trend, use_container_width=True)
 
-    # -----------------------------------------------------------------------
+    
     # Section 3 — Operational Metrics
-    # -----------------------------------------------------------------------
+   
     st.markdown("#### 🏢 Operational Metrics")
     op_col1, op_col2 = st.columns(2)
 
@@ -625,9 +605,9 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
     if fig_readm_demo:
         st.plotly_chart(fig_readm_demo, use_container_width=True)
 
-    # -----------------------------------------------------------------------
+   
     # Section 4 — High-Risk Patient Records
-    # -----------------------------------------------------------------------
+    
     st.markdown("#### 🚨 High-Risk Patient Records")
     hr_table = build_high_risk_table(data)
     if not hr_table.empty:
