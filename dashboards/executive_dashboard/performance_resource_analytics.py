@@ -33,7 +33,9 @@ from kpi_calculations import (
 )
 
 
+# ---------------------------------------------------------------------------
 # ICD-9 Disease Category Mapping
+# ---------------------------------------------------------------------------
 
 ICD9_CATEGORIES: dict[tuple[int, int], str] = {
     (1, 139): "Infectious & Parasitic Diseases",
@@ -181,7 +183,7 @@ def _render_department_performance(data: pd.DataFrame) -> None:
             margin={"l": 10, "r": 10, "t": 50, "b": 10},
         )
         fig_bar.update_traces(textposition="outside")
-        st.plotly_chart(fig_bar, width="stretch")
+        st.plotly_chart(fig_bar, use_container_width=True)
 
     with col_radar:
         # Radar / spider chart for multi-metric dept comparison
@@ -228,7 +230,7 @@ def _render_department_performance(data: pd.DataFrame) -> None:
             height=370,
             margin={"l": 10, "r": 10, "t": 50, "b": 10},
         )
-        st.plotly_chart(fig_radar, width="stretch")
+        st.plotly_chart(fig_radar, use_container_width=True)
 
     # --- Monthly trend by department ---
     monthly_dept = create_monthly_workload_summary(data, group_by_department=True)
@@ -264,7 +266,7 @@ def _render_department_performance(data: pd.DataFrame) -> None:
                 height=380,
                 margin={"l": 10, "r": 10, "t": 50, "b": 10},
             )
-            st.plotly_chart(fig_trend, width="stretch")
+            st.plotly_chart(fig_trend, use_container_width=True)
 
     # --- Department summary table ---
     st.markdown("##### Department Comparison Table")
@@ -279,7 +281,7 @@ def _render_department_performance(data: pd.DataFrame) -> None:
         "patients_per_doctor": "Patients / Doctor",
     }
     display_df = dept_summary.rename(columns=display_cols)[list(display_cols.values())]
-    st.dataframe(display_df, width="stretch", hide_index=True)
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
     st.download_button(
         label="📥 Download Department Report (CSV)",
         data=display_df.to_csv(index=False).encode("utf-8"),
@@ -380,7 +382,7 @@ def _render_doctor_performance_summary(data: pd.DataFrame) -> None:
             showlegend=False,
             margin={"l": 10, "r": 10, "t": 50, "b": 60},
         )
-        st.plotly_chart(fig_top, width="stretch")
+        st.plotly_chart(fig_top, use_container_width=True)
 
     with col_scatter:
         fig_scatter = px.scatter(
@@ -403,7 +405,7 @@ def _render_doctor_performance_summary(data: pd.DataFrame) -> None:
             height=380,
             margin={"l": 10, "r": 10, "t": 50, "b": 10},
         )
-        st.plotly_chart(fig_scatter, width="stretch")
+        st.plotly_chart(fig_scatter, use_container_width=True)
 
     # Readmission rate distribution for doctors
     st.markdown("##### Doctor Readmission Rate Distribution")
@@ -421,7 +423,7 @@ def _render_doctor_performance_summary(data: pd.DataFrame) -> None:
         bargap=0.05,
         margin={"l": 10, "r": 10, "t": 50, "b": 10},
     )
-    st.plotly_chart(fig_hist, width="stretch")
+    st.plotly_chart(fig_hist, use_container_width=True)
 
     # Ranked table
     st.markdown("##### Full Doctor Performance Table")
@@ -441,7 +443,7 @@ def _render_doctor_performance_summary(data: pd.DataFrame) -> None:
     display_df = doctor_summary[valid_orig_cols].rename(
         columns={k: display_cols[k] for k in valid_orig_cols}
     )
-    st.dataframe(display_df, width="stretch", hide_index=True)
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
     st.download_button(
         label="📥 Download Doctor Performance Report (CSV)",
         data=display_df.to_csv(index=False).encode("utf-8"),
@@ -511,7 +513,7 @@ def _render_disease_distribution(data: pd.DataFrame) -> None:
             showlegend=False,
             margin={"l": 10, "r": 10, "t": 50, "b": 10},
         )
-        st.plotly_chart(fig_pie, width="stretch")
+        st.plotly_chart(fig_pie, use_container_width=True)
 
     with col_bar:
         fig_cat_bar = px.bar(
@@ -535,7 +537,7 @@ def _render_disease_distribution(data: pd.DataFrame) -> None:
             coloraxis_showscale=False,
             margin={"l": 10, "r": 10, "t": 50, "b": 10},
         )
-        st.plotly_chart(fig_cat_bar, width="stretch")
+        st.plotly_chart(fig_cat_bar, use_container_width=True)
 
     # Gender breakdown by category
     if "gender" in wd.columns:
@@ -565,7 +567,7 @@ def _render_disease_distribution(data: pd.DataFrame) -> None:
             xaxis_tickangle=-30,
             margin={"l": 10, "r": 10, "t": 50, "b": 80},
         )
-        st.plotly_chart(fig_gender, width="stretch")
+        st.plotly_chart(fig_gender, use_container_width=True)
 
     # Age-group breakdown (if age_group column present, else use age)
     age_col = None
@@ -605,7 +607,7 @@ def _render_disease_distribution(data: pd.DataFrame) -> None:
                 xaxis_tickangle=-30,
                 margin={"l": 10, "r": 10, "t": 50, "b": 80},
             )
-            st.plotly_chart(fig_age, width="stretch")
+            st.plotly_chart(fig_age, use_container_width=True)
 
     # Department heatmap
     if "department" in wd.columns:
@@ -631,7 +633,7 @@ def _render_disease_distribution(data: pd.DataFrame) -> None:
             margin={"l": 10, "r": 10, "t": 50, "b": 10},
             xaxis_tickangle=-40,
         )
-        st.plotly_chart(fig_heat, width="stretch")
+        st.plotly_chart(fig_heat, use_container_width=True)
 
 
 # ---------------------------------------------------------------------------
@@ -736,7 +738,7 @@ def _render_resource_utilization(data: pd.DataFrame) -> None:
                 height=340,
                 margin={"l": 10, "r": 10, "t": 50, "b": 10},
             )
-            st.plotly_chart(fig_occ, width="stretch")
+            st.plotly_chart(fig_occ, use_container_width=True)
 
     # --- LOS Distribution ---
     if "length_of_stay" in wd.columns:
@@ -758,7 +760,7 @@ def _render_resource_utilization(data: pd.DataFrame) -> None:
                 bargap=0.05,
                 margin={"l": 10, "r": 10, "t": 50, "b": 10},
             )
-            st.plotly_chart(fig_los_hist, width="stretch")
+            st.plotly_chart(fig_los_hist, use_container_width=True)
 
         with col_box:
             if "department" in wd.columns:
@@ -779,7 +781,7 @@ def _render_resource_utilization(data: pd.DataFrame) -> None:
                     showlegend=False,
                     margin={"l": 10, "r": 10, "t": 50, "b": 10},
                 )
-                st.plotly_chart(fig_los_box, width="stretch")
+                st.plotly_chart(fig_los_box, use_container_width=True)
 
     # --- Monthly Workload ---
     monthly_wl = create_monthly_workload_summary(data)
@@ -820,7 +822,7 @@ def _render_resource_utilization(data: pd.DataFrame) -> None:
             height=380,
             margin={"l": 10, "r": 60, "t": 50, "b": 10},
         )
-        st.plotly_chart(fig_wl, width="stretch")
+        st.plotly_chart(fig_wl, use_container_width=True)
 
     # --- Bed Occupancy by Department ---
     if "bed_occupancy" in wd.columns and "department" in wd.columns:
@@ -850,7 +852,7 @@ def _render_resource_utilization(data: pd.DataFrame) -> None:
             coloraxis_showscale=False,
             margin={"l": 10, "r": 10, "t": 50, "b": 10},
         )
-        st.plotly_chart(fig_bed_dept, width="stretch")
+        st.plotly_chart(fig_bed_dept, use_container_width=True)
 
 
 # ---------------------------------------------------------------------------
