@@ -581,7 +581,7 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
     with chart_col:
         fig_forecast = build_admission_forecast_chart(data)
         if fig_forecast:
-            st.plotly_chart(fig_forecast, width="stretch")
+            st.plotly_chart(fig_forecast, use_container_width=True)
         else:
             st.info("Admission data unavailable for forecasting.")
 
@@ -589,7 +589,7 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
         model_df = _load_model_comparison()
         if model_df is not None:
             with st.expander("📋 Forecast Model Performance Metrics"):
-                st.dataframe(model_df, hide_index=True, width="stretch")
+                st.dataframe(model_df, hide_index=True, use_container_width=True)
                 st.caption(
                     "ARIMA and Prophet models were trained on daily historical admissions. "
                     "Monthly forecasts are aggregated from the daily outputs."
@@ -597,12 +597,12 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
 
     with gauge_col:
         fig_gauge = build_bed_occupancy_gauge(kpis["bed_occupancy"])
-        st.plotly_chart(fig_gauge, width="stretch")
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
         # Readmission trend below the gauge
         fig_readm_trend = build_readmission_trend_chart(data)
         if fig_readm_trend:
-            st.plotly_chart(fig_readm_trend, width="stretch")
+            st.plotly_chart(fig_readm_trend, use_container_width=True)
 
     # -----------------------------------------------------------------------
     # Section 3 — Operational Metrics
@@ -613,17 +613,17 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
     with op_col1:
         fig_alos = build_alos_by_department_chart(data)
         if fig_alos:
-            st.plotly_chart(fig_alos, width="stretch")
+            st.plotly_chart(fig_alos, use_container_width=True)
 
     with op_col2:
         fig_age = build_patient_by_age_group_chart(data)
         if fig_age:
-            st.plotly_chart(fig_age, width="stretch")
+            st.plotly_chart(fig_age, use_container_width=True)
 
     # Readmission by age group & gender
     fig_readm_demo = build_readmission_by_age_gender_chart(data)
     if fig_readm_demo:
-        st.plotly_chart(fig_readm_demo, width="stretch")
+        st.plotly_chart(fig_readm_demo, use_container_width=True)
 
     # -----------------------------------------------------------------------
     # Section 4 — High-Risk Patient Records
@@ -635,7 +635,7 @@ def render_patient_hospital_performance(data: pd.DataFrame) -> None:
             f"Showing **{len(hr_table):,}** high-risk patient records "
             f"(30-day readmission flag). Sorted by Length of Stay ↓."
         )
-        st.dataframe(hr_table, width="stretch", hide_index=True)
+        st.dataframe(hr_table, use_container_width=True, hide_index=True)
         csv_bytes = hr_table.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="📥 Download High-Risk Patient Report (CSV)",
