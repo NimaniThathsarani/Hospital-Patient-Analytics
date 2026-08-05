@@ -99,12 +99,11 @@ def apply_sidebar_filters(data: pd.DataFrame) -> pd.DataFrame:
     return filtered_data
 
 
-# ---------------------------------------------------------------------------
 # Page configuration
-# ---------------------------------------------------------------------------
+
 st.set_page_config(
-    page_title="Executive KPI Dashboard",
-    page_icon="📈",
+    page_title="📈Executive KPI Dashboard",
+
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -112,7 +111,7 @@ st.set_page_config(
 st.markdown(apply_dashboard_styles(), unsafe_allow_html=True)
 
 with st.sidebar:
-    st.header("📈 Executive Navigation")
+    st.header("Executive Navigation")
     selected_dashboard = st.radio(
         "Select Dashboard Module",
         [
@@ -124,7 +123,7 @@ with st.sidebar:
 st.markdown(
     """
     <div class="dashboard-title">
-        📈 Executive KPI Dashboard
+        Executive KPI Dashboard
     </div>
     <div class="dashboard-subtitle">
         Management insights into hospital operations, efficiency, and patient care.
@@ -133,9 +132,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------------------------------------------------------------------------
 # Data loading & filtering
-# ---------------------------------------------------------------------------
+
 try:
     dashboard_data, _ = load_dashboard_data()
     if dashboard_data.empty:
@@ -151,9 +149,8 @@ if filtered_data.empty:
     st.warning("No records match the selected filters. Please adjust your selections.")
     st.stop()
 
-# ---------------------------------------------------------------------------
 # Module routing
-# ---------------------------------------------------------------------------
+
 if selected_dashboard == "Patient & Hospital Performance":
     render_patient_hospital_performance(filtered_data)
 elif selected_dashboard == "Performance & Resource Analytics":
