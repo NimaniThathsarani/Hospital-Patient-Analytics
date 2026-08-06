@@ -62,11 +62,5 @@ jupyter notebook
 Run the Streamlit Dashboard:
 
 ```bash
-streamlit run dashboards/doctor_dashboard/app.py
-```
-
-or
-
-```bash
 streamlit run dashboards/executive_dashboard/app.py
 ```
